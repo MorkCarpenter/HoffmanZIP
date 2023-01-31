@@ -65,6 +65,10 @@ namespace hfm {
 		FILE* infile;
 		//文件输出操作
 		FILE* outfile;
+		//文件压缩率
+		double per;
+		//文件字符长
+		ULL file_len;
 	};
 }
 

@@ -7,6 +7,7 @@
 			fileio[i].character = (bit8)i;
 		}
 		code.resize(256);
+		per = -2.0;
 	}
 	hfm::HFMZip::~HFMZip() {
 	}
@@ -39,6 +40,7 @@
 		}
 	}
 	void hfm::HFMZip::CreateCode() {
+		per = 0.0;
 		size_t left, right, now;
 		std::stack<size_t>sk;
 		sk.push(tree[node_number - 1].right_child);
@@ -58,13 +60,17 @@
 			}
 			else {
 				code[tree[now].character] = tree[now].code;
+				per += (tree[now].code.size() / 4.0) * (tree[now].weight / file_len);
 			}
 		}
+		printf_s("文件压缩率：%.3lf\n", per);
 	}
 	int hfm::HFMZip::LoadFile(const std::string& ifile_name,
 		const std::string& ofile_name) {
 		bit8 inchar;
-		ULL file_len = 0;
+		bit8 outchar;
+		std::string tmp_string;
+		file_len = 0;
 		std::string filekind;
 		size_t i = ifile_name.size() - 1;
 		while (ifile_name[i] != '.') --i;
@@ -97,6 +103,7 @@
 			fwrite((char*)&fileio[0].character, sizeof(bit8), 1, outfile);
 			fwrite((char*)&fileio[0].weight, sizeof(ULL), 1, outfile);
 			fclose(outfile);
+			printf_s("文件压缩率：0.250\n");
 		}
 		else {
 			node_number = char_kind * 2 - 1;
@@ -122,19 +129,40 @@
 			ULL write_len = 0;
 			do {
 				fread((char*)&inchar, sizeof(bit8), 1, infile);
-				if (write_len==file_len) break;
-				fputs(code[inchar].c_str(), outfile);
 				++write_len;
+				if (write_len==file_len) break;
+				tmp_string += code[inchar];
+				while (tmp_string.size() >= 8) {
+					outchar = 0;
+					for (i = 0; i < 8; ++i) {
+						outchar <<= 1;
+						if (tmp_string[i] == '1')
+							outchar |= 1;
+					}
+					fwrite((char*)&outchar, sizeof(bit8), 1, outfile);
+					tmp_string.erase(0,8);
+				}
+			
 			} while (true);
+			while (!tmp_string.empty()) {
+				outchar = 0;
+				for (i = 0; i < tmp_string.size(); ++i) {
+					outchar <<= 1;
+					if (tmp_string[i] == '1')
+						outchar |= 1;
+				}
+				outchar <<= 8 - i - 1;
+			}
 			fclose(infile);
 			fclose(outfile);
 		}
+		
 		return 0;
 	}
 	int hfm::HFMZip::CreateFile(const std::string& ifile_name,
 		const std::string& ofile_name) {
 		size_t i = 0;
-		ULL write_len = 1;
+		ULL write_len = 0;
 		ULL file_len = 0;
 		bit8 inchar = 0;
 		char file_kind[20];
@@ -175,23 +203,28 @@
 			now = node_number - 1;
 			while (true) {
 				fread((char*)&inchar, sizeof(bit8), 1, infile);
-				if (inchar == '1') {
-					now = tree[now].right_child;
+				for (i = 0; i < 8; ++i) {
+					if (inchar & 128) {
+						now = tree[now].right_child;
+					}
+					else {
+						now = tree[now].left_child;
+					}
+
+					if (tree[now].left_child == 0 && tree[now].right_child == 0) {
+						fwrite((char*)&tree[now].character, sizeof(bit8), 1, outfile);
+						now = node_number - 1;
+						++write_len;
+						if (write_len == file_len)break;
+					}
+					inchar <<= 1;
 				}
-				else if (inchar == '0') {
-					now = tree[now].left_child;
-				}
-				else return -1;
 				if (write_len == file_len)break;
-				if (tree[now].left_child == 0 && tree[now].right_child == 0) {
-					fwrite((char*)&tree[now].character, sizeof(bit8), 1, outfile);
-					now = node_number - 1;
-					++write_len;
-				}
 			}
 			fclose(infile);
 			fclose(outfile);
 		}
+		
 		return 0;
 	}
 	int hfm::compress(const std::string& ifile_name) {
@@ -209,6 +242,7 @@
 		const std::string& ofile_name) {
 		HFMZip opreation;
 		opreation.LoadFile(ifile_name, ofile_name);
+
 		return 0;
 	}
 	bool hfm::StatisticCMP(const Statistic& a, const Statistic& b)
