@@ -142,18 +142,20 @@
 					fwrite((char*)&outchar, sizeof(bit8), 1, outfile);
 					tmp_string.erase(0,8);
 				}
-			
 			} while (true);
 			while (!tmp_string.empty()) {
 				outchar = 0;
+				int flag = 0;
 				for (i = 0; i < tmp_string.size(); ++i) {
 					outchar <<= 1;
+					++flag;
 					if (tmp_string[i] == '1')
 						outchar |= 1;
 				}
-				outchar <<= 8 - i - 1;
+				outchar <<= 8 - flag;
 				tmp_string.erase(0,i);
 			}
+			fwrite((char*)&outchar, sizeof(bit8), 1, outfile);
 			fclose(infile);
 			fclose(outfile);
 		}
@@ -212,7 +214,7 @@
 						now = tree[now].left_child;
 					}
 
-					if (tree[now].left_child == 0 && tree[now].right_child == 0) {
+					if (now<char_kind) {
 						fwrite((char*)&tree[now].character, sizeof(bit8), 1, outfile);
 						now = node_number - 1;
 						++write_len;
