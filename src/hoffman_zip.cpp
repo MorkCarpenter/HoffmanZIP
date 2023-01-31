@@ -60,7 +60,7 @@
 			}
 			else {
 				code[tree[now].character] = tree[now].code;
-				per += (tree[now].code.size() / 4.0) * ((long double)tree[now].weight / (long double)file_len);
+				per += (tree[now].code.size() / 8.0) * ((long double)tree[now].weight / (long double)file_len);
 			}
 		}
 		printf_s("文件压缩率：%.3lf\n", per);
@@ -103,7 +103,7 @@
 			fwrite((char*)&fileio[0].character, sizeof(bit8), 1, outfile);
 			fwrite((char*)&fileio[0].weight, sizeof(ULL), 1, outfile);
 			fclose(outfile);
-			printf_s("文件压缩率：0.250\n");
+			printf_s("仅有一种字符，huf文件固定22kb！\n");
 		}
 		else {
 			node_number = char_kind * 2 - 1;
