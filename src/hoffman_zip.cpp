@@ -60,7 +60,7 @@
 			}
 			else {
 				code[tree[now].character] = tree[now].code;
-				per += (tree[now].code.size() / 4.0) * (tree[now].weight / file_len);
+				per += (tree[now].code.size() / 4.0) * ((long double)tree[now].weight / (long double)file_len);
 			}
 		}
 		printf_s("文件压缩率：%.3lf\n", per);
@@ -152,6 +152,7 @@
 						outchar |= 1;
 				}
 				outchar <<= 8 - i - 1;
+				tmp_string.erase(0,i);
 			}
 			fclose(infile);
 			fclose(outfile);
@@ -162,7 +163,7 @@
 	int hfm::HFMZip::CreateFile(const std::string& ifile_name,
 		const std::string& ofile_name) {
 		size_t i = 0;
-		ULL write_len = 0;
+		ULL write_len = 1;
 		ULL file_len = 0;
 		bit8 inchar = 0;
 		char file_kind[20];
